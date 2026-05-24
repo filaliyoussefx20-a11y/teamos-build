@@ -1,0 +1,16 @@
+name: Build TeamOS ISO
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Copy HTML
+        run: cp TeamOS.html teamos.html
+      - name: Build ISO
+        run: sudo bash BUILD.sh
+      - name: Upload ISO
+        uses: actions/upload-artifact@v3
+        with:
+          name: TeamOS-ISO
+          path: TeamOS.iso
