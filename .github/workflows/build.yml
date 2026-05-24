@@ -4,35 +4,23 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y xorriso grub-pc-bin grub-efi-amd64-bin mtools squashfs-tools debootstrap
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y xorriso grub-pc-bin grub-efi-amd64-bin mtools squashfs-tools debootstrap linux-image-amd64
 
-      - name: Build ISO
+      - name: Build rootfs
         run: |
           sudo debootstrap --arch=amd64 bookworm /tmp/rootfs http://deb.debian.org/debian
           sudo mkdir -p /tmp/rootfs/home/teamos/teamos
           sudo cp TeamOS.html /tmp/rootfs/home/teamos/teamos/index.html
           sudo mkdir -p /tmp/rootfs/boot/grub
-          echo 'set timeout=5
-set default=0
-menuentry "TeamOS" {
-  linux /boot/vmlinuz root=/dev/sr0 boot=live quiet
-  initrd /boot/initrd.img
-}' | sudo tee /tmp/rootfs/boot/grub/grub.cfg
-          sudo apt-get install -y linux-image-amd64
           sudo cp /boot/vmlinuz* /tmp/rootfs/boot/vmlinuz
           sudo cp /boot/initrd.img* /tmp/rootfs/boot/initrd.img
+          printf 'set timeout=5\nset default=0\nmenuentry "TeamOS" {\n  linux /boot/vmlinuz root=/dev/sr0 quiet\n  initrd /boot/initrd.img\n}\n' | sudo tee /tmp/rootfs/boot/grub/grub.cfg
           sudo grub-mkrescue -o TeamOS.iso /tmp/rootfs
-          echo "DONE"
 
-      - name: Upload ISO
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: TeamOS-ISO
           path: TeamOS.iso
-          retention-days: 7
